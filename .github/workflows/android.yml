@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Validate, Build and Upload APK
+    name: Build Android APK
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -39,7 +39,7 @@ jobs:
             -type f -name sdkmanager -print -quit 2>/dev/null || true)"
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "::error::Android SDK sdkmanager not found."
+            echo "::error::sdkmanager nahi mila."
             exit 1
           fi
 
@@ -50,7 +50,7 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Validate project ZIP
+      - name: Validate ZIP
         shell: bash
         run: |
           set -euo pipefail
@@ -58,19 +58,19 @@ jobs:
           ZIP_FILE="$GITHUB_WORKSPACE/Aditya-Personal-JARVIS-v0.2.0.zip"
 
           if [ ! -f "$ZIP_FILE" ]; then
-            echo "::error::Project ZIP was not found in repository root."
+            echo "::error::Project ZIP repository mein nahi mili."
             ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi
 
           unzip -t "$ZIP_FILE"
 
-      - name: Extract and detect Android project
+      - name: Extract and locate Android project
         shell: bash
         run: |
           set -euo pipefail
 
-          EXTRACT_DIR="$RUNNER_TEMP/aditya-jarvis-source"
+          EXTRACT_DIR="$RUNNER_TEMP/aditya-jarvis"
           mkdir -p "$EXTRACT_DIR"
 
           unzip -o \
@@ -79,32 +79,27 @@ jobs:
 
           PROJECT_DIR=""
 
-          if [ -f "$EXTRACT_DIR/aditya-ai/settings.gradle.kts" ] || \
-             [ -f "$EXTRACT_DIR/aditya-ai/settings.gradle" ]; then
-            PROJECT_DIR="$EXTRACT_DIR/aditya-ai"
-          else
-            while IFS= read -r SETTINGS_FILE; do
-              CANDIDATE="$(dirname "$SETTINGS_FILE")"
+          while IFS= read -r SETTINGS_FILE; do
+            CANDIDATE="$(dirname "$SETTINGS_FILE")"
 
-              if [ -f "$CANDIDATE/app/build.gradle.kts" ] || \
-                 [ -f "$CANDIDATE/app/build.gradle" ]; then
-                PROJECT_DIR="$CANDIDATE"
-                break
-              fi
-            done < <(
-              find "$EXTRACT_DIR" -type f \
-                \( -name settings.gradle -o -name settings.gradle.kts \)
-            )
-          fi
+            if [ -f "$CANDIDATE/app/build.gradle" ] || \
+               [ -f "$CANDIDATE/app/build.gradle.kts" ]; then
+              PROJECT_DIR="$CANDIDATE"
+              break
+            fi
+          done < <(
+            find "$EXTRACT_DIR" -type f \
+              \( -name settings.gradle -o -name settings.gradle.kts \)
+          )
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::Android Gradle project could not be detected."
+            echo "::error::Android project ya app Gradle file nahi mili."
             find "$EXTRACT_DIR" -maxdepth 5 -type f | head -100
             exit 1
           fi
 
-          echo "Detected project: $PROJECT_DIR"
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Project found: $PROJECT_DIR"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -117,16 +112,14 @@ jobs:
           set -euo pipefail
 
           cd "$PROJECT_DIR"
-
-          gradle --no-daemon --stacktrace clean assembleDebug
+          gradle --no-daemon --stacktrace assembleDebug
 
           APK_FILE="$(find "$PROJECT_DIR" -type f \
             -path '*/build/outputs/apk/debug/*.apk' \
             -print -quit)"
 
           if [ -z "$APK_FILE" ]; then
-            echo "::error::Build finished but no debug APK was found."
-            find "$PROJECT_DIR" -type f -path '*/build/outputs/*' || true
+            echo "::error::APK generate nahi hui."
             exit 1
           fi
 
@@ -135,7 +128,6 @@ jobs:
           cp "$APK_FILE" \
             "$GITHUB_WORKSPACE/output/Aditya-Personal-JARVIS.apk"
 
-          echo "APK generated successfully:"
           ls -lh "$GITHUB_WORKSPACE/output/Aditya-Personal-JARVIS.apk"
 
       - name: Upload APK artifact
