@@ -1,0 +1,49 @@
+
+name: Build Aditya JARVIS APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Aditya-Personal-JARVIS-v0.2.0.zip"
+      - ".github/workflows/android.yml"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Extract project ZIP
+        run: unzip -o Aditya-Personal-JARVIS-v0.2.0.zip
+
+      - name: Build and test APK
+        working-directory: aditya-ai
+        run: gradle testDebugUnitTest assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Aditya-Personal-JARVIS-APK
+          path: aditya-ai/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          
