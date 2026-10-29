@@ -1,6 +1,4 @@
-
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses || true
+run: yes | sdkmanager --licenses || true
               
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
