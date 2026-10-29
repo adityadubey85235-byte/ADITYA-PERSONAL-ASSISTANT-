@@ -1,5 +1,4 @@
 
-        
 name: Build Aditya Personal JARVIS APK
 
 on:
@@ -34,19 +33,22 @@ jobs:
           cmdline-tools-version: 12266719
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
-          packages: ""
 
-      - name: Install required Android SDK packages
+      - name: Install Android SDK packages
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
 
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          command -v sdkmanager
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager -print -quit)"
 
-          yes | sdkmanager --licenses >/dev/null
+          if [ -z "$SDKMANAGER" ]; then
+            echo "::error::sdkmanager nahi mila."
+            exit 1
+          fi
 
-          sdkmanager \
+          "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
@@ -54,13 +56,13 @@ jobs:
       - name: Validate project ZIP
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
 
           ZIP_FILE="$GITHUB_WORKSPACE/Aditya-Personal-JARVIS-v0.2.0.zip"
 
           if [ ! -f "$ZIP_FILE" ]; then
             echo "::error::Project ZIP repository mein nahi mili."
-            ls -la
+            ls -la "$GITHUB_WORKSPACE"
             exit 1
           fi
 
@@ -69,7 +71,7 @@ jobs:
       - name: Extract and locate Android project
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
 
           EXTRACT_DIR="$RUNNER_TEMP/aditya-jarvis"
           mkdir -p "$EXTRACT_DIR"
@@ -110,7 +112,7 @@ jobs:
       - name: Build debug APK
         shell: bash
         run: |
-          set -euo pipefail
+          set -e
 
           cd "$PROJECT_DIR"
           gradle --no-daemon --stacktrace assembleDebug
@@ -120,11 +122,12 @@ jobs:
             -print -quit)"
 
           if [ -z "$APK_FILE" ]; then
-            echo "::error::APK generate nahi hui."
+            echo "::error::Build ke baad APK nahi mili."
             exit 1
           fi
 
           mkdir -p "$GITHUB_WORKSPACE/output"
+
           cp "$APK_FILE" \
             "$GITHUB_WORKSPACE/output/Aditya-Personal-JARVIS.apk"
 
