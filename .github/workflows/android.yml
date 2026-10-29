@@ -1,17 +1,6 @@
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)"
-          if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: Android sdkmanager nahi mila."
-            exit 1
-          fi
-          yes | "$SDKMANAGER" --licenses || true
-          "$SDKMANAGER" "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-          
+name: Build Aditya JARVIS APK
+
 on:
   workflow_dispatch:
   push:
@@ -33,11 +22,25 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Accept Android SDK licenses
-        run: yes | sdkmanager --licenses || true
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK
-        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager 2>/dev/null | head -n 1)"
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager nahi mila"
+            exit 1
+          fi
+
+          yes | "$SDKMANAGER" --licenses || true
+
+          "$SDKMANAGER" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Extract project ZIP
         run: unzip -o Aditya-Personal-JARVIS-v0.2.0.zip
@@ -56,4 +59,5 @@ jobs:
         with:
           name: aditya-jarvis-debug-apk
           path: aditya-ai/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
           
