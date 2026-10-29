@@ -42,14 +42,35 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Extract project ZIP
+      - name: Check project ZIP
+        shell: bash
         run: |
-          unzip -o Aditya-Personal-JARVIS-v0.2.0.zip -d extracted
+          if [ ! -f "Aditya-Personal-JARVIS-v0.2.0.zip" ]; then
+            echo "ERROR: Repository mein project ZIP nahi mili."
+            ls -la
+            exit 1
+          fi
+
+          unzip -t "Aditya-Personal-JARVIS-v0.2.0.zip"
+
+      - name: Extract project ZIP
+        shell: bash
+        run: |
+          mkdir -p extracted
+          unzip -o "Aditya-Personal-JARVIS-v0.2.0.zip" -d extracted
+
+          echo "Extracted files:"
+          find extracted -maxdepth 4 -type f | head -100
+
           PROJECT_DIR="$(find extracted -type f -name gradlew -print -quit | xargs -r dirname)"
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "ERROR: Project ke andar gradlew nahi mila."
-            find extracted -maxdepth 4 -type f | head -80
+            echo "ERROR: ZIP mein gradlew nahi mila."
+            exit 1
+          fi
+
+          if [ ! -f "$PROJECT_DIR/settings.gradle" ] && [ ! -f "$PROJECT_DIR/settings.gradle.kts" ]; then
+            echo "ERROR: Gradle settings file nahi mili."
             exit 1
           fi
 
@@ -60,7 +81,7 @@ jobs:
         with:
           gradle-version: "8.9"
 
-      - name: Build APK
+      - name: Build debug APK
         shell: bash
         run: |
           cd "$PROJECT_DIR"
