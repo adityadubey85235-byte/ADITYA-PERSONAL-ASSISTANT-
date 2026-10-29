@@ -33,11 +33,12 @@ jobs:
           cmdline-tools-version: 12266719
           accept-android-sdk-licenses: true
           log-accepted-android-sdk-licenses: false
+          packages: platform-tools
 
       - name: Install Android SDK packages
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
             -type f -name sdkmanager -print -quit)"
@@ -49,14 +50,13 @@ jobs:
 
           "$SDKMANAGER" \
             --sdk_root="$ANDROID_HOME" \
-            "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
       - name: Validate project ZIP
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           ZIP_FILE="$GITHUB_WORKSPACE/Aditya-Personal-JARVIS-v0.2.0.zip"
 
@@ -71,7 +71,7 @@ jobs:
       - name: Extract and locate Android project
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           EXTRACT_DIR="$RUNNER_TEMP/aditya-jarvis"
           mkdir -p "$EXTRACT_DIR"
@@ -112,7 +112,7 @@ jobs:
       - name: Build debug APK
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
 
           cd "$PROJECT_DIR"
           gradle --no-daemon --stacktrace assembleDebug
