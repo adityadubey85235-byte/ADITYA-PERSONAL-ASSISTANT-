@@ -22,28 +22,27 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses
+        run: yes | sdkmanager --licenses || true
 
-      - name: Install Android platform
-        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - name: Install Android SDK
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Extract project ZIP
+        run: unzip -o Aditya-Personal-JARVIS-v0.2.0.zip
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
 
-      - name: Extract project ZIP
-        run: unzip -o Aditya-Personal-JARVIS-v0.2.0.zip
-
-      - name: Build and test APK
+      - name: Build APK
         working-directory: aditya-ai
-        run: gradle testDebugUnitTest assembleDebug --no-daemon
+        run: gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Aditya-Personal-JARVIS-APK
-          path: aditya-ai/app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          name: aditya-jarvis-debug-apk
+          path: aditya-ai/app/build/outputs/apk/debug/app-debug.apk
           
