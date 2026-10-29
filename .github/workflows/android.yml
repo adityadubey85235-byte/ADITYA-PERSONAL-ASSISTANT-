@@ -1,4 +1,5 @@
 
+        
 name: Build Aditya Personal JARVIS APK
 
 on:
@@ -29,28 +30,28 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 12266719
+          accept-android-sdk-licenses: true
+          log-accepted-android-sdk-licenses: false
+          packages: ""
 
-      - name: Install Android SDK packages
+      - name: Install required Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
 
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f -name sdkmanager -print -quit 2>/dev/null || true)"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          command -v sdkmanager
 
-          if [ -z "$SDKMANAGER" ]; then
-            echo "::error::sdkmanager nahi mila."
-            exit 1
-          fi
+          yes | sdkmanager --licenses >/dev/null
 
-          yes | "$SDKMANAGER" --licenses || true
-
-          "$SDKMANAGER" \
+          sdkmanager \
             "platform-tools" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
-      - name: Validate ZIP
+      - name: Validate project ZIP
         shell: bash
         run: |
           set -euo pipefail
@@ -59,7 +60,7 @@ jobs:
 
           if [ ! -f "$ZIP_FILE" ]; then
             echo "::error::Project ZIP repository mein nahi mili."
-            ls -la "$GITHUB_WORKSPACE"
+            ls -la
             exit 1
           fi
 
@@ -93,7 +94,7 @@ jobs:
           )
 
           if [ -z "$PROJECT_DIR" ]; then
-            echo "::error::Android project ya app Gradle file nahi mili."
+            echo "::error::Android Gradle project nahi mila."
             find "$EXTRACT_DIR" -maxdepth 5 -type f | head -100
             exit 1
           fi
@@ -124,7 +125,6 @@ jobs:
           fi
 
           mkdir -p "$GITHUB_WORKSPACE/output"
-
           cp "$APK_FILE" \
             "$GITHUB_WORKSPACE/output/Aditya-Personal-JARVIS.apk"
 
